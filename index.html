@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="KUMA"/>
+<meta name="theme-color" content="#0f0f0f"/>
+<link rel="apple-touch-icon" href="icon.png"/>
+<title>KUMA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+:root{
+  --bg:#0f0f0f;--bg2:#1a1a1a;--bg3:#222;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
+  --text:#e8e8e8;--text2:#999;--text3:#555;
+  --accent:#7F77DD;--accentbg:#1e1b35;
+  --green:#1D9E75;--red:#E24B4A;--amber:#EF9F27;--blue:#378ADD;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;font-size:15px;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+#app{display:flex;flex-direction:column;height:100%;max-width:500px;margin:0 auto;position:relative}
+
+/* ── Header ── */
+.header{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;
+  padding-top:max(14px,env(safe-area-inset-top));
+  background:var(--bg2);
+  border-bottom:0.5px solid var(--border);
+  flex-shrink:0;
+}
+.header-logo{font-size:13px;font-weight:800;letter-spacing:2.5px;color:var(--accent)}
+.header-sep{width:1px;height:13px;background:var(--border2)}
+.header-screen{font-size:13px;color:var(--text2);font-weight:500;flex:1}
+.header-date{font-size:12px;color:var(--text3)}
+
+/* ── Date nav ── */
+.date-nav{
+  display:flex;align-items:center;
+  padding:8px 12px;
+  background:var(--bg);
+  border-bottom:0.5px solid var(--border);
+  flex-shrink:0;gap:4px;
+}
+.date-nav-btn{
+  background:none;border:none;color:var(--text2);
+  font-size:24px;line-height:1;padding:4px 10px;cursor:pointer;
+  border-radius:8px;
+}
+.date-nav-btn:active{background:var(--bg3)}
+.date-nav-btn:disabled{color:var(--text3);cursor:default}
+.date-label-wrap{flex:1;text-align:center}
+.date-label{font-size:15px;font-weight:600;color:var(--text)}
+.today-badge{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);background:var(--accentbg);padding:2px 7px;border-radius:5px;margin-left:8px;border:0.5px solid rgba(127,119,221,0.3)}
+
+/* ── Tabs ── */
+.tabs{
+  display:flex;background:var(--bg2);
+  border-bottom:0.5px solid var(--border);flex-shrink:0;
+}
+.tab-btn{
+  flex:1;padding:11px 0;text-align:center;font-size:13px;
+  color:var(--text3);border:none;background:none;cursor:pointer;
+  border-bottom:2px solid transparent;transition:color 0.15s,border-color 0.15s;
+  font-weight:500;
+}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ── Content ── */
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;display:flex;flex-direction:column;gap:10px}
+
+/* ── Cards ── */
+.card{background:var(--bg2);border-radius:12px;padding:14px;border:0.5px solid var(--border)}
+.card-title{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:10px}
+
+/* ── Habits ── */
+.habit-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 0;border-bottom:0.5px solid var(--border);
+}
+.habit-row:last-child{border-bottom:none}
+.habit-name{font-size:15px;color:var(--text);flex:1;padding-right:12px}
+.check-btn{
+  width:32px;height:32px;border-radius:9px;
+  border:1.5px solid var(--border2);background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;transition:all 0.15s;
+  font-size:16px;color:transparent;
+}
+.check-btn.done{background:var(--amber);border-color:var(--amber);color:#fff}
+
+/* ── Progress bar ── */
+.prog-bar-bg{height:4px;background:var(--bg3);border-radius:2px;margin-bottom:12px}
+.prog-bar{height:4px;background:var(--accent);border-radius:2px;transition:width 0.3s}
+.prog-label{display:flex;justify-content:space-between;margin-bottom:6px}
+.prog-label-txt{font-size:11px;color:var(--text3)}
+.prog-pct{font-size:11px;color:var(--accent);font-weight:600}
+
+/* ── Tasks ── */
+.task-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:0.5px solid var(--border);
+}
+.task-row:last-child{border-bottom:none}
+.task-cb{
+  width:22px;height:22px;border-radius:6px;
+  border:1.5px solid var(--border2);background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;font-size:13px;color:transparent;
+  transition:all 0.15s;
+}
+.task-cb.done{background:var(--accent);border-color:var(--accent);color:#fff}
+.task-text{font-size:15px;flex:1;line-height:1.4;color:var(--text)}
+.task-text.done{text-decoration:line-through;color:var(--text3)}
+.del-btn{
+  background:none;border:none;color:var(--text3);
+  font-size:18px;padding:4px 6px;cursor:pointer;line-height:1;
+  border-radius:6px;
+}
+.del-btn:active{background:var(--bg3)}
+.done-section-hdr{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 0 6px;
+}
+.done-sep{flex:1;height:0.5px;background:var(--border)}
+.done-lbl{font-size:11px;font-weight:600;color:var(--text3)}
+
+/* ── Memo ── */
+.memo-entry{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:9px 0;border-bottom:0.5px solid var(--border);
+}
+.memo-entry:last-child{border-bottom:none}
+.memo-dot{color:var(--accent);font-size:18px;line-height:1.3;flex-shrink:0}
+.memo-text{font-size:15px;flex:1;line-height:1.5;color:var(--text)}
+
+/* ── Post ── */
+.post-entry{padding:9px 0;border-bottom:0.5px solid var(--border)}
+.post-entry:last-child{border-bottom:none}
+.post-time{font-size:11px;color:var(--text3);margin-bottom:4px}
+.post-text{font-size:14px;line-height:1.6;color:var(--text)}
+
+/* ── Input row ── */
+.input-row{display:flex;gap:8px;margin-top:10px}
+.inp{
+  flex:1;padding:11px 13px;
+  background:var(--bg3);border:0.5px solid var(--border2);
+  border-radius:10px;color:var(--text);font-size:15px;
+  outline:none;-webkit-appearance:none;font-family:inherit;
+}
+.inp::placeholder{color:var(--text3)}
+textarea.inp{resize:none}
+.add-btn{
+  padding:11px 16px;background:var(--accent);border:none;
+  border-radius:10px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;
+  white-space:nowrap;
+}
+.add-btn:active{opacity:0.85}
+.save-btn{
+  width:100%;padding:13px;background:var(--accent);border:none;
+  border-radius:10px;color:#fff;font-size:15px;font-weight:600;
+  cursor:pointer;margin-top:10px;
+}
+
+/* ── States ── */
+.empty{color:var(--text3);font-size:14px;text-align:center;padding:24px 0}
+.loading{display:flex;align-items:center;justify-content:center;height:80px;color:var(--text3);font-size:14px;gap:8px}
+.err-msg{color:#E24B4A;font-size:13px;padding:10px 12px;background:rgba(226,75,74,0.1);border-radius:8px;border:0.5px solid rgba(226,75,74,0.3)}
+
+/* ── Safe area bottom ── */
+.safe-bottom{height:max(12px,env(safe-area-inset-bottom));flex-shrink:0}
+
+/* ── FAB ── */
+.fab{
+  position:fixed;
+  bottom:max(20px,env(safe-area-inset-bottom));
+  right:20px;
+  width:50px;height:50px;border-radius:50%;
+  background:var(--bg2);border:0.5px solid var(--border2);
+  color:var(--text2);font-size:20px;cursor:pointer;
+  box-shadow:0 4px 20px rgba(0,0,0,0.5);z-index:100;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform 0.15s;
+}
+.fab:active{transform:scale(0.92)}
+
+/* ── Drawer ── */
+.drawer-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.55);
+  z-index:200;opacity:0;pointer-events:none;transition:opacity 0.25s;
+}
+.drawer-overlay.open{opacity:1;pointer-events:all}
+.drawer{
+  position:fixed;bottom:0;left:0;right:0;
+  max-width:500px;margin:0 auto;
+  background:var(--bg2);
+  border-radius:20px 20px 0 0;
+  border-top:0.5px solid var(--border2);
+  z-index:201;
+  transform:translateY(100%);
+  transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  padding:0 16px;
+  padding-bottom:max(24px,env(safe-area-inset-bottom));
+  max-height:70vh;display:flex;flex-direction:column;
+}
+.drawer.open{transform:translateY(0)}
+.drawer-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:12px auto 14px}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.drawer-title{font-size:13px;font-weight:700;color:var(--text2);letter-spacing:0.07em;text-transform:uppercase}
+.drawer-close{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:2px 6px}
+.drawer-scroll{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+
+/* ── Timeline ── */
+.tl-row{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:0.5px solid var(--border)}
+.tl-row:last-child{border-bottom:none}
+.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.tl-body{flex:1;min-width:0}
+.tl-name{font-size:15px;font-weight:600;color:var(--text);line-height:1.3}
+.tl-meta{font-size:12px;color:var(--text3);margin-top:2px}
+.tl-dur{font-weight:700;color:var(--accent)}
+.tl-running{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;background:var(--accentbg);border-radius:10px;margin-bottom:12px;border:0.5px solid rgba(127,119,221,0.3)}
+.tl-running-info{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.tl-running-name{font-size:15px;font-weight:700;color:var(--text);line-height:1.3}
+.tl-running-since{font-size:11px;color:var(--text3);margin-top:2px}
+.tl-elapsed{font-size:22px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;letter-spacing:1px;text-align:right}
+.tl-stop-btn{display:block;margin-top:4px;padding:4px 10px;background:var(--red);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;width:100%}
+.tl-start-form{padding-bottom:12px;border-bottom:0.5px solid var(--border);margin-bottom:4px}
+.tl-colors{display:flex;gap:8px;margin:10px 0}
+.tl-color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;flex-shrink:0;transition:transform 0.1s}
+.tl-color-dot.sel{border-color:#fff;transform:scale(1.15)}
+.tl-section-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;padding:10px 0 6px}
+/* Edit overlay */
+.edit-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:flex;align-items:flex-end}
+.edit-sheet{background:var(--bg2);border-radius:16px 16px 0 0;padding:20px 16px;width:100%;padding-bottom:max(20px,env(safe-area-inset-bottom))}
+/* Visual timeline block */
+.tl-block{position:absolute;left:4px;right:4px;border-radius:4px;padding:2px 4px;overflow:hidden;display:flex;flex-direction:column}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <span class="header-logo">KUMA</span>
+    <div class="header-sep"></div>
+    <span class="header-screen" id="header-screen">Habits</span>
+    <span class="header-date" id="header-date"></span>
+  </div>
+
+  <div class="date-nav">
+    <button class="date-nav-btn" onclick="changeDate(-1)">‹</button>
+    <div class="date-label-wrap">
+      <span class="date-label" id="date-label"></span>
+      <span class="today-badge" id="today-badge" style="display:none">Today</span>
+    </div>
+    <button class="date-nav-btn" id="date-next-btn" onclick="changeDate(1)">›</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="timeline" onclick="setTab('timeline',this)">Timeline</button>
+    <button class="tab-btn" data-tab="habits"  onclick="setTab('habits',this)">Habits</button>
+    <button class="tab-btn" data-tab="tasks"   onclick="setTab('tasks',this)">Tasks</button>
+    <button class="tab-btn" data-tab="memo"    onclick="setTab('memo',this)">Memo</button>
+    <button class="tab-btn" data-tab="post"    onclick="setTab('post',this)">Post</button>
+  </div>
+
+  <div class="content" id="content"></div>
+  <div class="safe-bottom"></div>
+</div>
+
+<button class="fab" onclick="openLater()" title="Later Tasks">☰</button>
+
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeLater()"></div>
+<div class="drawer" id="later-drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-header">
+    <span class="drawer-title">Later Tasks</span>
+    <button class="drawer-close" onclick="closeLater()">✕</button>
+  </div>
+  <div class="drawer-scroll" id="later-content">
+    <div class="loading">Loading…</div>
+  </div>
+  <div class="input-row" style="margin-top:12px;flex-shrink:0">
+    <input class="inp" id="later-inp" placeholder="Add task…">
+    <button class="add-btn" onclick="addLater()">＋</button>
+  </div>
+</div>
+
+<script>
+'use strict'
+const SB_URL = 'https://werplrgmsgjtbovzjbig.supabase.co/rest/v1'
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlcnBscmdtc2dqdGJvdnpqYmlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0ODA2MzAsImV4cCI6MjA5ODA1NjYzMH0.5NQnA8eDZpl1P68vu2Bpaak5yYF0IjtrHJSbuNd6AoE'
+const H = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }
+
+async function sb(method, table, query, body) {
+  try {
+    const isPatch = method === 'PATCH' || method === 'DELETE'
+    const headers = method === 'POST'
+      ? { ...H, 'Prefer': 'return=minimal' }
+      : isPatch
+        ? { ...H, 'Prefer': 'count=exact' }
+        : H
+    const res = await fetch(`${SB_URL}/${table}${query||''}`, {
+      method,
+      headers,
+      body: body != null ? JSON.stringify(body) : undefined,
+    })
+    if (method === 'GET') {
+      const data = await res.json().catch(() => [])
+      return Array.isArray(data) ? data : []
+    }
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '')
+      console.error(`sb ${method} ${table} failed [${res.status}]:`, errText)
+      alert(`${method} 失敗 (${res.status}): ${errText.slice(0,100)}`)
+      return false
+    }
+    if (isPatch) {
+      const range = res.headers.get('Content-Range') || ''
+      const count = parseInt(range.split('/')[1]) || 0
+      if (count === 0) {
+        alert(`${method}: 0件一致（フィルター不一致の可能性）\nquery: ${query}`)
+      }
+    }
+    return res.ok
+  } catch(e) {
+    console.error(`sb ${method} ${table} error:`, e)
+    alert(`通信エラー: ${e.message}`)
+    return false
+  }
+}
+
+// ── State ──────────────────────────────────────────────────────────────────
+let currentDate = new Date()
+let currentTab  = 'timeline'
+let habitDefs   = null   // cached
+
+const toDateStr = d => {
+  const y = d.getFullYear()
+  const m = String(d.getMonth()+1).padStart(2,'0')
+  const day = String(d.getDate()).padStart(2,'0')
+  return `${y}-${m}-${day}`
+}
+const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+const fmtDate = d => `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`
+const isToday = d => toDateStr(d) === toDateStr(new Date())
+
+// ── UI update ──────────────────────────────────────────────────────────────
+function updateHeader() {
+  const tabLabels = { habits:'Habits', tasks:'Tasks', memo:'Memo', post:'Post', timeline:'Timeline' }
+  document.getElementById('header-screen').textContent = tabLabels[currentTab] || ''
+  const now = new Date()
+  const diff = Math.round((new Date(toDateStr(currentDate)) - new Date(toDateStr(now))) / 86400000)
+  document.getElementById('header-date').textContent =
+    diff === 0  ? '' :
+    diff === -1 ? 'Yesterday' :
+    diff === 1  ? 'Tomorrow' : ''
+  document.getElementById('date-label').textContent = fmtDate(currentDate)
+  const badge = document.getElementById('today-badge')
+  badge.style.display = isToday(currentDate) ? 'inline-block' : 'none'
+  document.getElementById('date-next-btn').disabled = isToday(currentDate)
+}
+
+function changeDate(n) {
+  currentDate = new Date(currentDate)
+  currentDate.setDate(currentDate.getDate() + n)
+  updateHeader()
+  render()
+}
+
+function setTab(tab, el) {
+  currentTab = tab
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'))
+  el.classList.add('active')
+  updateHeader()
+  render()
+}
+
+const $content = () => document.getElementById('content')
+
+function showLoading() {
+  $content().innerHTML = '<div class="loading">Loading…</div>'
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+async function render() {
+  showLoading()
+  try {
+    if      (currentTab === 'habits')   await renderHabits()
+    else if (currentTab === 'tasks')    await renderTasks()
+    else if (currentTab === 'memo')     await renderMemo()
+    else if (currentTab === 'post')     await renderPost()
+    else if (currentTab === 'timeline') await renderTimeline()
+  } catch(e) {
+    $content().innerHTML = `<div class="card"><div class="err-msg">Error: ${e.message}</div></div>`
+  }
+}
+
+// ── Habits ─────────────────────────────────────────────────────────────────
+async function renderHabits() {
+  if (!habitDefs) habitDefs = await sb('GET','kuma_habit_definitions','?order=sort_order')
+  const date   = toDateStr(currentDate)
+  const habits = await sb('GET','kuma_habits',`?date=eq.${date}`)
+  const doneMap = {}
+  habits.forEach(h => { doneMap[h.habit_index] = h.done })
+
+  const doneCount = habitDefs.filter((_, i) => !!doneMap[i]).length
+  const total     = habitDefs.length
+  const pct       = total > 0 ? Math.round(doneCount / total * 100) : 0
+
+  const div = document.createElement('div')
+  div.className = 'card'
+
+  if (total === 0) {
+    div.innerHTML = '<div class="card-title">Daily Habits</div><div class="empty">Add habits from KUMA (PC)</div>'
+  } else {
+    div.innerHTML = `
+      <div class="card-title">Daily Habits</div>
+      <div class="prog-label">
+        <span class="prog-label-txt">${doneCount} / ${total} done</span>
+        <span class="prog-pct">${pct}%</span>
+      </div>
+      <div class="prog-bar-bg"><div class="prog-bar" style="width:${pct}%"></div></div>
+    `
+    habitDefs.forEach((hd, i) => {
+      const done = !!doneMap[i]
+      const row  = document.createElement('div')
+      row.className = 'habit-row'
+      row.innerHTML = `
+        <span class="habit-name">${escHtml(hd.name)}</span>
+        <button class="check-btn ${done?'done':''}" onclick="toggleHabit(${i},${done})">✓</button>
+      `
+      div.appendChild(row)
+    })
+  }
+
+  $content().innerHTML = ''
+  $content().appendChild(div)
+}
+
+async function toggleHabit(idx, currentDone) {
+  const date    = toDateStr(currentDate)
+  const newDone = !currentDone
+  // Check first to avoid duplicates
+  const existing = await sb('GET','kuma_habits',`?date=eq.${date}&habit_index=eq.${idx}`)
+  if (existing.length > 0) {
+    await sb('PATCH','kuma_habits',`?date=eq.${date}&habit_index=eq.${idx}`,{done:newDone})
+  } else {
+    await sb('POST','kuma_habits','',{date, habit_index:idx, done:newDone})
+  }
+  await renderHabits()
+}
+
+// ── Tasks ──────────────────────────────────────────────────────────────────
+async function renderTasks() {
+  const date  = toDateStr(currentDate)
+  const tasks = await sb('GET','kuma_daily_tasks',`?date=eq.${date}&order=id`)
+
+  const todo = tasks.filter(t => !t.done)
+  const done = tasks.filter(t =>  t.done)
+  const pct  = tasks.length > 0 ? Math.round(done.length / tasks.length * 100) : 0
+
+  const div = document.createElement('div')
+  div.className = 'card'
+  div.innerHTML = `<div class="card-title">Daily Tasks</div>`
+
+  if (tasks.length > 0) {
+    div.innerHTML += `
+      <div class="prog-label">
+        <span class="prog-label-txt">${done.length} / ${tasks.length} done</span>
+        <span class="prog-pct">${pct}%</span>
+      </div>
+      <div class="prog-bar-bg"><div class="prog-bar" style="width:${pct}%"></div></div>
+    `
+  }
+
+  if (tasks.length === 0) {
+    div.innerHTML += '<div class="empty">No tasks</div>'
+  }
+
+  todo.forEach(t => div.appendChild(makeTaskRow(t, 'toggleTask', 'delTask')))
+
+  if (done.length > 0) {
+    const sep = document.createElement('div')
+    sep.className = 'done-section-hdr'
+    sep.innerHTML = `<div class="done-sep"></div><span class="done-lbl">Done ${done.length}</span><div class="done-sep"></div>`
+    div.appendChild(sep)
+    done.forEach(t => {
+      const row = makeTaskRow(t, 'toggleTask', 'delTask')
+      row.style.opacity = '0.55'
+      div.appendChild(row)
+    })
+  }
+
+  const inp = document.createElement('div')
+  inp.className = 'input-row'
+  inp.innerHTML = `<input class="inp" id="task-inp" placeholder="Add task…"><button class="add-btn" onclick="addTask()">＋</button>`
+  div.appendChild(inp)
+
+  $content().innerHTML = ''
+  $content().appendChild(div)
+  document.getElementById('task-inp')?.addEventListener('keydown', e => e.key === 'Enter' && addTask())
+}
+
+function makeTaskRow(t, toggleFn, delFn) {
+  const row = document.createElement('div')
+  row.className = 'task-row'
+  row.innerHTML = `
+    <button class="task-cb ${t.done?'done':''}" onclick="${toggleFn}(${t.id},${t.done})">✓</button>
+    <span class="task-text ${t.done?'done':''}">${escHtml(t.title)}</span>
+    <button class="del-btn" onclick="${delFn}(${t.id})">✕</button>
+  `
+  return row
+}
+
+async function toggleTask(id, done) {
+  await sb('PATCH','kuma_daily_tasks',`?id=eq.${id}`,{done:!done})
+  await renderTasks()
+}
+async function delTask(id) {
+  await sb('DELETE','kuma_daily_tasks',`?id=eq.${id}`)
+  await renderTasks()
+}
+async function addTask() {
+  const inp = document.getElementById('task-inp')
+  if (!inp?.value.trim()) return
+  await sb('POST','kuma_daily_tasks','',{date:toDateStr(currentDate), title:inp.value.trim(), done:false})
+  inp.value = ''
+  await renderTasks()
+}
+
+// ── Memo ───────────────────────────────────────────────────────────────────
+async function renderMemo() {
+  const date    = toDateStr(currentDate)
+  const entries = await sb('GET','kuma_diary',`?date=eq.${date}&order=id`)
+
+  const div = document.createElement('div')
+  div.className = 'card'
+  div.innerHTML = '<div class="card-title">Memo</div>'
+
+  if (!entries.length) div.innerHTML += '<div class="empty">No memos</div>'
+  entries.forEach(e => {
+    const row = document.createElement('div')
+    row.className = 'memo-entry'
+    row.innerHTML = `
+      <span class="memo-dot">·</span>
+      <span class="memo-text">${escHtml(e.content)}</span>
+      <button class="del-btn" onclick="delMemo(${e.id})">✕</button>
+    `
+    div.appendChild(row)
+  })
+
+  const inp = document.createElement('div')
+  inp.className = 'input-row'
+  inp.innerHTML = `<input class="inp" id="memo-inp" placeholder="Add memo…"><button class="add-btn" onclick="addMemo()">＋</button>`
+  div.appendChild(inp)
+
+  $content().innerHTML = ''
+  $content().appendChild(div)
+  document.getElementById('memo-inp')?.addEventListener('keydown', e => e.key === 'Enter' && addMemo())
+}
+async function delMemo(id) {
+  await sb('DELETE','kuma_diary',`?id=eq.${id}`)
+  await renderMemo()
+}
+async function addMemo() {
+  const inp = document.getElementById('memo-inp')
+  if (!inp?.value.trim()) return
+  await sb('POST','kuma_diary','',{date:toDateStr(currentDate), content:inp.value.trim()})
+  inp.value = ''
+  await renderMemo()
+}
+
+// ── Post ───────────────────────────────────────────────────────────────────
+async function renderPost() {
+  const date  = toDateStr(currentDate)
+  const posts = await sb('GET','kuma_posts',`?date=eq.${date}&order=id`)
+
+  const div = document.createElement('div')
+  div.className = 'card'
+  div.innerHTML = '<div class="card-title">X Post</div>'
+
+  if (!posts.length) div.innerHTML += '<div class="empty">No posts</div>'
+  posts.forEach(p => {
+    const row = document.createElement('div')
+    row.className = 'post-entry'
+    row.innerHTML = `
+      <div class="post-time">${escHtml(p.time||'')}</div>
+      <div class="post-text">${escHtml(p.content||'').replace(/\n/g,'<br>')}</div>
+    `
+    div.appendChild(row)
+  })
+
+  const inp = document.createElement('div')
+  inp.innerHTML = `
+    <textarea class="inp" id="post-inp" rows="4" placeholder="Write post…" style="margin-top:10px;display:block;width:100%"></textarea>
+    <button class="save-btn" onclick="addPost()">Save</button>
+  `
+  div.appendChild(inp)
+
+  $content().innerHTML = ''
+  $content().appendChild(div)
+}
+async function addPost() {
+  const inp = document.getElementById('post-inp')
+  if (!inp?.value.trim()) return
+  const now  = new Date()
+  const time = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0')
+  await sb('POST','kuma_posts','',{date:toDateStr(currentDate), time, content:inp.value.trim()})
+  inp.value = ''
+  await renderPost()
+}
+
+// ── Later Tasks Drawer ─────────────────────────────────────────────────────
+async function openLater() {
+  document.getElementById('drawer-overlay').classList.add('open')
+  document.getElementById('later-drawer').classList.add('open')
+  await loadLater()
+}
+function closeLater() {
+  document.getElementById('drawer-overlay').classList.remove('open')
+  document.getElementById('later-drawer').classList.remove('open')
+}
+async function loadLater() {
+  const lc = document.getElementById('later-content')
+  lc.innerHTML = '<div class="loading">Loading…</div>'
+  try {
+    const tasks = await sb('GET','tasks','?order=sort_order')
+    lc.innerHTML = ''
+    if (!tasks.length) {
+      lc.innerHTML = '<div class="empty">No tasks</div>'
+      return
+    }
+    const todo = tasks.filter(t => !t.done)
+    const done = tasks.filter(t =>  t.done)
+
+    todo.forEach(t => lc.appendChild(makeLaterRow(t)))
+    if (done.length > 0) {
+      const sep = document.createElement('div')
+      sep.className = 'done-section-hdr'
+      sep.innerHTML = `<div class="done-sep"></div><span class="done-lbl">Done ${done.length}</span><div class="done-sep"></div>`
+      lc.appendChild(sep)
+      done.forEach(t => {
+        const row = makeLaterRow(t)
+        row.style.opacity = '0.5'
+        lc.appendChild(row)
+      })
+    }
+  } catch(e) {
+    lc.innerHTML = `<div class="err-msg">Error: ${e.message}</div>`
+  }
+}
+function makeLaterRow(t) {
+  const row = document.createElement('div')
+  row.className = 'task-row'
+  row.innerHTML = `
+    <button class="task-cb ${t.done?'done':''}" onclick="toggleLater(${t.id},${t.done})">✓</button>
+    <span class="task-text ${t.done?'done':''}" ondblclick="editLater(${t.id},this)">${escHtml(t.title)}</span>
+    <button class="del-btn" onclick="delLater(${t.id})">✕</button>
+  `
+  return row
+}
+async function toggleLater(id, done) {
+  await sb('PATCH','tasks',`?id=eq.${id}`,{done:!done})
+  await loadLater()
+}
+async function delLater(id) {
+  await sb('DELETE','tasks',`?id=eq.${id}`)
+  await loadLater()
+}
+async function addLater() {
+  const inp = document.getElementById('later-inp')
+  if (!inp?.value.trim()) return
+  const all      = await sb('GET','tasks','?order=sort_order')
+  const maxOrder = all.length ? Math.max(...all.map(t => t.sort_order||0)) : 0
+  await sb('POST','tasks','',{title:inp.value.trim(), done:false, sort_order:maxOrder+1})
+  inp.value = ''
+  await loadLater()
+}
+async function editLater(id, span) {
+  const current = span.textContent
+  const input   = document.createElement('input')
+  input.className = 'inp'
+  input.value   = current
+  input.style.flex = '1'
+  span.replaceWith(input)
+  input.focus()
+  const save = async () => {
+    const val = input.value.trim()
+    if (val && val !== current) await sb('PATCH','tasks',`?id=eq.${id}`,{title:val})
+    await loadLater()
+  }
+  input.addEventListener('blur', save)
+  input.addEventListener('keydown', e => e.key === 'Enter' && save())
+}
+document.getElementById('later-inp')?.addEventListener('keydown', e => e.key === 'Enter' && addLater())
+
+// ── Timer state ────────────────────────────────────────────────────────────
+const TL_COLORS = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316']
+let runningTimer    = null   // { activity, color, startedAt, tags }
+let selectedTlColor = TL_COLORS[0]
+let selectedTlTags  = ''
+let timerInterval   = null
+let tlView          = 'timeline'  // 'timeline' | 'tags'
+let tlAggRange      = 7           // days
+
+function loadRunningTimer() {
+  try { runningTimer = JSON.parse(localStorage.getItem('kuma_pwa_timer') || 'null') } catch { runningTimer = null }
+}
+function saveRunningTimer() {
+  if (runningTimer) localStorage.setItem('kuma_pwa_timer', JSON.stringify(runningTimer))
+  else localStorage.removeItem('kuma_pwa_timer')
+}
+
+function startTimerTick() {
+  if (timerInterval) clearInterval(timerInterval)
+  timerInterval = setInterval(() => {
+    if (!runningTimer) return
+    const el = document.getElementById('tl-elapsed')
+    if (el) {
+      const secs = Math.floor((Date.now() - new Date(runningTimer.startedAt).getTime()) / 1000)
+      const h = String(Math.floor(secs/3600)).padStart(2,'0')
+      const m = String(Math.floor(secs%3600/60)).padStart(2,'0')
+      const s = String(secs%60).padStart(2,'0')
+      el.textContent = `${h}:${m}:${s}`
+    }
+  }, 1000)
+}
+
+let currentEditColor = TL_COLORS[0]
+let _editOverlay = null
+let _editRec = null
+
+function selectTlColor(color, el) {
+  selectedTlColor = color
+  el.closest('.tl-colors').querySelectorAll('.tl-color-dot').forEach(d => d.classList.remove('sel'))
+  el.classList.add('sel')
+}
+function selectEditColor(color, el) {
+  currentEditColor = color
+  el.closest('.tl-colors').querySelectorAll('.tl-color-dot').forEach(d => d.classList.remove('sel'))
+  el.classList.add('sel')
+}
+
+function openEditModal(rec) {
+  if (_editOverlay) _editOverlay.remove()
+  _editRec = rec
+  currentEditColor = rec.color || TL_COLORS[0]
+  const endIso = rec.started_at && rec.duration
+    ? new Date(new Date(rec.started_at).getTime() + rec.duration*1000).toISOString() : null
+  const metaStr = rec.started_at
+    ? `${fmtTime(rec.started_at)} – ${endIso ? fmtTime(endIso) : '--:--'} &nbsp;·&nbsp; ${fmtDur(rec.duration||0)}` : ''
+  const colorDots = TL_COLORS.map(c =>
+    `<div class="tl-color-dot${c===currentEditColor?' sel':''}" style="background:${c}" onclick="selectEditColor('${c}',this)"></div>`
+  ).join('')
+  const overlay = document.createElement('div')
+  overlay.className = 'edit-overlay'
+  overlay.innerHTML = `<div class="edit-sheet">
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">${metaStr}</div>
+    <input class="inp" id="edit-modal-inp" value="${escHtml(rec.activity||'')}" placeholder="Activity…" style="width:100%;margin-bottom:8px">
+    <input class="inp" id="edit-modal-tags" value="${escHtml(rec.tags||'')}" placeholder="タグ（例: 仕事, 集中）" style="width:100%;margin-bottom:12px;font-size:13px">
+    <div class="tl-colors">${colorDots}</div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="add-btn" style="background:var(--red);flex:0;padding:10px 16px" onclick="deleteRec()">削除</button>
+      <button class="add-btn" style="flex:1" onclick="saveRec()">保存</button>
+    </div>
+  </div>`
+  overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.remove(); _editOverlay = null } })
+  document.body.appendChild(overlay)
+  _editOverlay = overlay
+  setTimeout(() => document.getElementById('edit-modal-inp')?.focus(), 50)
+}
+
+async function saveRec() {
+  const startedAt = _editRec?.started_at
+  if (!startedAt) return
+  const inp = document.getElementById('edit-modal-inp')
+  const tagInp = document.getElementById('edit-modal-tags')
+  const activity = inp?.value.trim() || '–'
+  const tags = tagInp?.value.trim() || null
+  const ok = await sb('PATCH', 'kuma_time_records', `?started_at=eq.${encodeURIComponent(startedAt)}`, { activity, color: currentEditColor, tags })
+  if (_editOverlay) { _editOverlay.remove(); _editOverlay = null }
+  _editRec = null
+  await renderTimeline()
+  if (!ok) alert('保存に失敗しました')
+}
+
+async function deleteRec() {
+  const startedAt = _editRec?.started_at
+  if (!startedAt) return
+  const ok = await sb('DELETE', 'kuma_time_records', `?started_at=eq.${encodeURIComponent(startedAt)}`)
+  if (_editOverlay) { _editOverlay.remove(); _editOverlay = null }
+  _editRec = null
+  await renderTimeline()
+  if (!ok) alert('削除に失敗しました')
+}
+
+async function startPwaTimer() {
+  const inp = document.getElementById('tl-inp')
+  const tagInp = document.getElementById('tl-tag-inp')
+  const activity = inp?.value.trim() || '–'
+  const tags = tagInp?.value.trim() || null
+  runningTimer = { activity, color: selectedTlColor, startedAt: new Date().toISOString(), tags }
+  saveRunningTimer()
+  if (inp) inp.value = ''
+  if (tagInp) tagInp.value = ''
+  selectedTlTags = ''
+  await renderTimeline()
+  startTimerTick()
+}
+
+async function discardPwaTimer() {
+  runningTimer = null
+  saveRunningTimer()
+  clearInterval(timerInterval); timerInterval = null
+  await renderTimeline()
+}
+
+async function stopPwaTimer() {
+  if (!runningTimer) return
+  const duration = Math.floor((Date.now() - new Date(runningTimer.startedAt).getTime()) / 1000)
+  const date = toDateStr(new Date(runningTimer.startedAt))
+  const ok = await sb('POST','kuma_time_records','',{
+    activity: runningTimer.activity,
+    date,
+    duration,
+    started_at: runningTimer.startedAt,
+    color: runningTimer.color,
+    icon: null,
+    tags: runningTimer.tags || null
+  })
+  runningTimer = null
+  saveRunningTimer()
+  clearInterval(timerInterval); timerInterval = null
+  await renderTimeline()
+  if (!ok) alert('保存に失敗しました（Supabase RLSを無効にしてください）')
+}
+
+// ── Timeline ───────────────────────────────────────────────────────────────
+function fmtTime(iso) {
+  const d = new Date(iso)
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0')
+}
+function fmtDur(secs) {
+  const h = Math.floor(secs / 3600)
+  const m = Math.floor((secs % 3600) / 60)
+  if (h > 0 && m > 0) return `${h}h${m}m`
+  if (h > 0) return `${h}h`
+  return `${m}m`
+}
+
+async function renderTimeline() {
+  const today = toDateStr(new Date())
+  const date  = toDateStr(currentDate)
+  const recs  = await sb('GET', 'kuma_time_records', `?date=eq.${date}&order=started_at`)
+
+  // ── Sticky top: running timer or start form ──
+  const sticky = document.createElement('div')
+  sticky.style.cssText = 'position:sticky;top:0;z-index:10;background:var(--bg);padding:0 0 8px'
+
+  if (runningTimer && date === today) {
+    const c = runningTimer.color || '#6366f1'
+    const elapsed = Math.floor((Date.now() - new Date(runningTimer.startedAt).getTime()) / 1000)
+    const h = String(Math.floor(elapsed/3600)).padStart(2,'0')
+    const m = String(Math.floor(elapsed%3600/60)).padStart(2,'0')
+    const s = String(elapsed%60).padStart(2,'0')
+    const block = document.createElement('div')
+    block.className = 'tl-running'
+    block.innerHTML = `
+      <div class="tl-running-info">
+        <div class="tl-dot" style="background:${escHtml(c)};width:12px;height:12px;flex-shrink:0;margin-top:0"></div>
+        <div style="min-width:0">
+          <div class="tl-running-name">${escHtml(runningTimer.activity)}</div>
+          <div class="tl-running-since">${fmtTime(runningTimer.startedAt)} から</div>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div id="tl-elapsed" class="tl-elapsed">${h}:${m}:${s}</div>
+        <div style="display:flex;gap:4px">
+          <button class="tl-stop-btn" style="flex:1" onclick="stopPwaTimer()">Stop</button>
+          <button class="tl-stop-btn" style="background:var(--text3);flex:0;padding:4px 8px" onclick="discardPwaTimer()" title="保存せず破棄">✕</button>
+        </div>
+      </div>
+    `
+    sticky.appendChild(block)
+    startTimerTick()
+  } else if (date === today) {
+    const form = document.createElement('div')
+    form.className = 'tl-start-form'
+    const colorDots = TL_COLORS.map(c =>
+      `<div class="tl-color-dot${c===selectedTlColor?' sel':''}" style="background:${c}" onclick="selectTlColor('${c}',this)"></div>`
+    ).join('')
+    form.innerHTML = `
+      <div style="display:flex;gap:8px;margin-bottom:6px">
+        <input class="inp" id="tl-inp" placeholder="Activity…" style="flex:1">
+        <button class="add-btn" onclick="startPwaTimer()">Start</button>
+      </div>
+      <input class="inp" id="tl-tag-inp" placeholder="タグ（例: 仕事, 集中）" style="width:100%;margin-bottom:6px;font-size:12px" value="${escHtml(selectedTlTags)}">
+      <div class="tl-colors">${colorDots}</div>
+    `
+    sticky.appendChild(form)
+    form.querySelector('#tl-inp')?.addEventListener('keydown', e => e.key==='Enter' && startPwaTimer())
+    form.querySelector('#tl-tag-inp')?.addEventListener('change', e => { selectedTlTags = e.target.value })
+  }
+
+  const div = document.createElement('div')
+  div.className = 'card'
+  div.style.paddingTop = '8px'
+
+  // ── Visual timeline ──
+  const PPM = 1.2
+  const minH = 0, maxH = 24
+  const totalPx = (maxH - minH) * 60 * PPM
+
+  const visual = document.createElement('div')
+  visual.style.cssText = `display:flex;position:relative;margin-top:8px`
+
+  // Left: hour labels
+  const labelCol = document.createElement('div')
+  labelCol.style.cssText = `width:36px;flex-shrink:0;position:relative;height:${totalPx}px`
+  for (let h = minH; h <= maxH; h++) {
+    const top = (h - minH) * 60 * PPM
+    const lbl = document.createElement('div')
+    lbl.style.cssText = `position:absolute;top:${top - 6}px;left:0;font-size:9px;color:var(--text3);line-height:1`
+    lbl.textContent = `${String(h).padStart(2,'0')}:00`
+    labelCol.appendChild(lbl)
+  }
+
+  // Right: timeline area
+  const recCol = document.createElement('div')
+  recCol.style.cssText = `flex:1;position:relative;height:${totalPx}px;border-left:0.5px solid var(--border2)`
+
+  // Hour lines
+  for (let h = minH; h <= maxH; h++) {
+    const line = document.createElement('div')
+    line.style.cssText = `position:absolute;top:${(h-minH)*60*PPM}px;left:0;right:0;border-top:0.5px solid var(--border)`
+    recCol.appendChild(line)
+  }
+
+  // Current time indicator (today only)
+  if (date === today) {
+    const now = new Date()
+    const nowTop = (now.getHours() * 60 + now.getMinutes() - minH * 60) * PPM
+    if (nowTop >= 0 && nowTop <= totalPx) {
+      const nowLine = document.createElement('div')
+      nowLine.style.cssText = `position:absolute;top:${nowTop}px;left:0;right:0;border-top:1.5px solid var(--red);z-index:2`
+      const nowDot = document.createElement('div')
+      nowDot.style.cssText = `position:absolute;top:-4px;left:-4px;width:7px;height:7px;border-radius:50%;background:var(--red)`
+      nowLine.appendChild(nowDot)
+      recCol.appendChild(nowLine)
+    }
+  }
+
+  // Record blocks (tap to edit)
+  recs.forEach(r => {
+    if (!r.started_at) return
+    const sd = new Date(r.started_at)
+    const startMin = sd.getHours() * 60 + sd.getMinutes()
+    const durMin = (r.duration || 0) / 60
+    const top = (startMin - minH * 60) * PPM
+    const height = Math.max(durMin * PPM, 24)
+    const color = r.color || '#6366f1'
+    const endIso = new Date(sd.getTime() + (r.duration||0)*1000).toISOString()
+    const timeStr = `${fmtTime(r.started_at)}–${fmtTime(endIso)}`
+
+    const block = document.createElement('div')
+    block.className = 'tl-block'
+    block.style.cssText += `top:${top}px;height:${height}px;background:${color}20;`
+      const tagsHtml = r.tags ? r.tags.split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span style="font-size:6px;background:${escHtml(color)}30;color:${escHtml(color)};border-radius:3px;padding:0 3px;margin-right:2px;white-space:nowrap">#${escHtml(t)}</span>`).join('') : ''
+    block.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:2px"><span style="font-size:9px;font-weight:700;color:${escHtml(color)};line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${escHtml(r.activity||'–')}</span><span style="font-size:7px;color:${escHtml(color)};line-height:1.3;flex-shrink:0;white-space:nowrap;font-weight:700;margin-left:2px">${fmtDur(r.duration||0)}</span></div><div style="font-size:7px;color:var(--text3);line-height:1.3;white-space:nowrap">${escHtml(timeStr)}</div>${tagsHtml ? `<div style="margin-top:1px;overflow:hidden">${tagsHtml}</div>` : ''}`
+    block.style.cursor = 'pointer'
+    block.onclick = () => openEditModal(r)
+    recCol.appendChild(block)
+  })
+
+  visual.appendChild(labelCol)
+  visual.appendChild(recCol)
+  div.appendChild(visual)
+
+  if (recs.length === 0 && (!runningTimer || date !== today)) {
+    const empty = document.createElement('div')
+    empty.className = 'empty'
+    empty.style.marginTop = '12px'
+    empty.textContent = 'No records'
+    div.appendChild(empty)
+  }
+
+  // ── Tab switcher ──
+  const tabBar = document.createElement('div')
+  tabBar.style.cssText = 'display:flex;gap:4px;padding:4px 0 8px'
+  ;['timeline','tags'].forEach(v => {
+    const btn = document.createElement('button')
+    btn.textContent = v === 'timeline' ? 'タイムライン' : 'タグ集計'
+    btn.style.cssText = `font-size:12px;padding:4px 12px;border-radius:12px;border:0.5px solid var(--border2);background:${tlView===v?'var(--accent)':'transparent'};color:${tlView===v?'#fff':'var(--text2)'};cursor:pointer`
+    btn.onclick = () => { tlView = v; renderTimeline() }
+    tabBar.appendChild(btn)
+  })
+
+  $content().innerHTML = ''
+  $content().appendChild(sticky)
+  $content().appendChild(tabBar)
+
+  if (tlView === 'tags') {
+    $content().appendChild(await buildTagAggView(date))
+    return
+  }
+  $content().appendChild(div)
+
+  // Auto-scroll to current time (or first record for past dates)
+  if (date === today && runningTimer) {
+    setTimeout(() => { $content().scrollTop = 0 }, 30)
+  } else if (date === today) {
+    const now = new Date()
+    const nowPx = (now.getHours() * 60 + now.getMinutes() - minH * 60) * PPM
+    // Put current time ~1/3 from top of visible area
+    setTimeout(() => { $content().scrollTop = Math.max(0, nowPx - 100) }, 30)
+  } else if (recs.length > 0) {
+    const firstRec = recs.find(r => r.started_at)
+    if (firstRec) {
+      const sd = new Date(firstRec.started_at)
+      const topPx = (sd.getHours() * 60 + sd.getMinutes() - minH * 60) * PPM
+      setTimeout(() => { $content().scrollTop = Math.max(0, topPx - 60) }, 30)
+    }
+  }
+}
+
+// ── Tag Aggregation ────────────────────────────────────────────────────────
+async function buildTagAggView(baseDate) {
+  const wrap = document.createElement('div')
+  wrap.className = 'card'
+  wrap.style.marginTop = '0'
+
+  // Range selector
+  const rangeBar = document.createElement('div')
+  rangeBar.style.cssText = 'display:flex;gap:6px;margin-bottom:12px'
+  ;[7, 30, 90].forEach(d => {
+    const btn = document.createElement('button')
+    btn.textContent = d === 7 ? '7日' : d === 30 ? '30日' : '90日'
+    btn.style.cssText = `font-size:12px;padding:3px 10px;border-radius:10px;border:0.5px solid var(--border2);background:${tlAggRange===d?'var(--accent)':'transparent'};color:${tlAggRange===d?'#fff':'var(--text2)'};cursor:pointer`
+    btn.onclick = () => { tlAggRange = d; renderTimeline() }
+    rangeBar.appendChild(btn)
+  })
+  wrap.appendChild(rangeBar)
+
+  // Fetch records for range
+  const end = new Date(baseDate); end.setDate(end.getDate() + 1)
+  const start = new Date(baseDate); start.setDate(start.getDate() - tlAggRange + 1)
+  const startStr = toDateStr(start)
+  const endStr = toDateStr(end)
+  const recs = await sb('GET', 'kuma_time_records', `?date=gte.${startStr}&date=lt.${endStr}&order=started_at`)
+
+  // Aggregate by tag
+  const tagMap = {}  // tag → { secs, activities: Set }
+  recs.forEach(r => {
+    const dur = r.duration || 0
+    const tags = r.tags ? r.tags.split(',').map(t=>t.trim()).filter(Boolean) : ['（タグなし）']
+    tags.forEach(tag => {
+      if (!tagMap[tag]) tagMap[tag] = { secs: 0, activities: new Set() }
+      tagMap[tag].secs += dur
+      if (r.activity && r.activity !== '–') tagMap[tag].activities.add(r.activity)
+    })
+  })
+
+  const sorted = Object.entries(tagMap).sort((a,b) => b[1].secs - a[1].secs)
+  const totalSecs = recs.reduce((s,r) => s + (r.duration||0), 0)
+
+  if (sorted.length === 0) {
+    const empty = document.createElement('div')
+    empty.className = 'empty'
+    empty.textContent = 'タグ付きの記録がありません'
+    wrap.appendChild(empty)
+    return wrap
+  }
+
+  // Summary header
+  const hdr = document.createElement('div')
+  hdr.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:10px'
+  hdr.textContent = `${startStr} 〜 ${toDateStr(new Date(end.getTime()-86400000))}　合計 ${fmtDur(totalSecs)}`
+  wrap.appendChild(hdr)
+
+  // Bar + rows
+  sorted.forEach(([tag, {secs, activities}]) => {
+    const pct = totalSecs > 0 ? Math.round(secs/totalSecs*100) : 0
+    const isNoTag = tag === '（タグなし）'
+    const row = document.createElement('div')
+    row.style.cssText = 'margin-bottom:10px'
+    row.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+        <span style="font-size:13px;font-weight:600;color:var(--text)">${isNoTag ? tag : '#'+escHtml(tag)}</span>
+        <span style="font-size:12px;color:var(--text2)">${fmtDur(secs)} <span style="color:var(--text3);font-size:11px">${pct}%</span></span>
+      </div>
+      <div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:2px;transition:width 0.3s"></div>
+      </div>
+      ${activities.size ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${[...activities].slice(0,4).map(a=>escHtml(a)).join('・')}</div>` : ''}
+    `
+    wrap.appendChild(row)
+  })
+
+  return wrap
+}
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;')
+}
+
+// ── Swipe to change tab ────────────────────────────────────────────────────
+const TAB_ORDER = ['timeline', 'habits', 'tasks', 'memo', 'post']
+let touchStartX = 0
+let touchStartY = 0
+
+document.getElementById('content').addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX
+  touchStartY = e.touches[0].clientY
+}, { passive: true })
+
+document.getElementById('content').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX
+  const dy = e.changedTouches[0].clientY - touchStartY
+  // 横スワイプ（縦スクロールより横が大きい場合のみ）
+  if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+  const idx = TAB_ORDER.indexOf(currentTab)
+  if (dx < 0 && idx < TAB_ORDER.length - 1) {
+    const next = TAB_ORDER[idx + 1]
+    const el = document.querySelector(`[data-tab="${next}"]`)
+    setTab(next, el)
+  } else if (dx > 0 && idx > 0) {
+    const prev = TAB_ORDER[idx - 1]
+    const el = document.querySelector(`[data-tab="${prev}"]`)
+    setTab(prev, el)
+  }
+}, { passive: true })
+
+// ── Init ───────────────────────────────────────────────────────────────────
+loadRunningTimer()
+if (runningTimer) startTimerTick()
+updateHeader()
+render()
+</script>
+</body>
+</html>
