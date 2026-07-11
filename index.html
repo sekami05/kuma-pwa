@@ -702,6 +702,7 @@ const TL_COLORS = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','
 const TAG_PRESETS = ['Work','Game','Self-care','Cat care']
 let runningTimer    = null   // { activity, color, startedAt, tags }
 let selectedTlColor = TL_COLORS[0]
+let selectedTlIcon = null
 let selectedTlTags  = []
 let currentEditTags = []
 let timerInterval   = null
@@ -825,15 +826,17 @@ function applyPastAct(name) {
   const p = _pastActMap[name]
   if (!p) return
   if (p.color) { selectedTlColor = p.color; document.querySelectorAll('.tl-color-dot').forEach(d => { d.classList.remove('sel'); if (d.style.background === p.color) d.classList.add('sel') }) }
+  selectedTlIcon = p.icon || null
 }
 async function startPwaTimer() {
   const inp = document.getElementById('tl-inp')
   const activity = inp?.value.trim() || '–'
   const tags = selectedTlTags.length ? selectedTlTags.join(',') : null
-  runningTimer = { activity, color: selectedTlColor, startedAt: new Date().toISOString(), tags }
+  runningTimer = { activity, color: selectedTlColor, icon: selectedTlIcon, startedAt: new Date().toISOString(), tags }
   saveRunningTimer()
   if (inp) inp.value = ''
   selectedTlTags = []
+  selectedTlIcon = null
   await renderTimeline()
   startTimerTick()
 }
@@ -855,7 +858,7 @@ async function stopPwaTimer() {
     duration,
     started_at: runningTimer.startedAt,
     color: runningTimer.color,
-    icon: null,
+    icon: runningTimer.icon || null,
     tags: runningTimer.tags || null
   })
   runningTimer = null
