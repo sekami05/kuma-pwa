@@ -1025,4 +1025,136 @@ async function renderTimeline() {
   // Auto-scroll to current time (or first record for past dates)
   if (date === today && runningTimer) {
     setTimeout(() => { $content().scrollTop = 0 }, 30)
-  } else if (d
+  } else if (date === today) {
+    const now = new Date()
+    const nowPx = (now.getHours() * 60 + now.getMinutes() - minH * 60) * PPM
+    // Put current time ~1/3 from top of visible area
+    setTimeout(() => { $content().scrollTop = Math.max(0, nowPx - 100) }, 30)
+  } else if (recs.length > 0) {
+    const firstRec = recs.find(r => r.started_at)
+    if (firstRec) {
+      const sd = new Date(firstRec.started_at)
+      const topPx = (sd.getHours() * 60 + sd.getMinutes() - minH * 60) * PPM
+      setTimeout(() => { $content().scrollTop = Math.max(0, topPx - 60) }, 30)
+    }
+  }
+}
+
+// ── Tag Aggregation ────────────────────────────────────────────────────────
+async function buildTagAggView(baseDate) {
+  const wrap = document.createElement('div')
+  wrap.className = 'card'
+  wrap.style.marginTop = '0'
+
+  // Range selector
+  const rangeBar = document.createElement('div')
+  rangeBar.style.cssText = 'display:flex;gap:6px;margin-bottom:12px'
+  ;[7, 30, 90].forEach(d => {
+    const btn = document.createElement('button')
+    btn.textContent = d === 7 ? '7日' : d === 30 ? '30日' : '90日'
+    btn.style.cssText = `font-size:12px;padding:3px 10px;border-radius:10px;border:0.5px solid var(--border2);background:${tlAggRange===d?'var(--accent)':'transparent'};color:${tlAggRange===d?'#fff':'var(--text2)'};cursor:pointer`
+    btn.onclick = () => { tlAggRange = d; renderTimeline() }
+    rangeBar.appendChild(btn)
+  })
+  wrap.appendChild(rangeBar)
+
+  // Fetch records for range
+  const end = new Date(baseDate); end.setDate(end.getDate() + 1)
+  const start = new Date(baseDate); start.setDate(start.getDate() - tlAggRange + 1)
+  const startStr = toDateStr(start)
+  const endStr = toDateStr(end)
+  const recs = await sb('GET', 'kuma_time_records', `?date=gte.${startStr}&date=lt.${endStr}&order=started_at`)
+
+  // Aggregate by tag
+  const tagMap = {}  // tag → { secs, activities: Set }
+  recs.forEach(r => {
+    const dur = r.duration || 0
+    const tags = r.tags ? r.tags.split(',').map(t=>t.trim()).filter(Boolean) : ['（タグなし）']
+    tags.forEach(tag => {
+      if (!tagMap[tag]) tagMap[tag] = { secs: 0, activities: new Set() }
+      tagMap[tag].secs += dur
+      if (r.activity && r.activity !== '–') tagMap[tag].activities.add(r.activity)
+    })
+  })
+
+  const sorted = Object.entries(tagMap).sort((a,b) => b[1].secs - a[1].secs)
+  const totalSecs = recs.reduce((s,r) => s + (r.duration||0), 0)
+
+  if (sorted.length === 0) {
+    const empty = document.createElement('div')
+    empty.className = 'empty'
+    empty.textContent = 'タグ付きの記録がありません'
+    wrap.appendChild(empty)
+    return wrap
+  }
+
+  // Summary header
+  const hdr = document.createElement('div')
+  hdr.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:10px'
+  hdr.textContent = `${startStr} 〜 ${toDateStr(new Date(end.getTime()-86400000))}　合計 ${fmtDur(totalSecs)}`
+  wrap.appendChild(hdr)
+
+  // Bar + rows
+  sorted.forEach(([tag, {secs, activities}]) => {
+    const pct = totalSecs > 0 ? Math.round(secs/totalSecs*100) : 0
+    const isNoTag = tag === '（タグなし）'
+    const row = document.createElement('div')
+    row.style.cssText = 'margin-bottom:10px'
+    row.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+        <span style="font-size:13px;font-weight:600;color:var(--text)">${isNoTag ? tag : '#'+escHtml(tag)}</span>
+        <span style="font-size:12px;color:var(--text2)">${fmtDur(secs)} <span style="color:var(--text3);font-size:11px">${pct}%</span></span>
+      </div>
+      <div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:2px;transition:width 0.3s"></div>
+      </div>
+      ${activities.size ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${[...activities].slice(0,4).map(a=>escHtml(a)).join('・')}</div>` : ''}
+    `
+    wrap.appendChild(row)
+  })
+
+  return wrap
+}
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;')
+}
+
+// ── Swipe to change tab ────────────────────────────────────────────────────
+const TAB_ORDER = ['timeline', 'habits', 'tasks', 'memo', 'post']
+let touchStartX = 0
+let touchStartY = 0
+
+document.getElementById('content').addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX
+  touchStartY = e.touches[0].clientY
+}, { passive: true })
+
+document.getElementById('content').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX
+  const dy = e.changedTouches[0].clientY - touchStartY
+  // 横スワイプ（縦スクロールより横が大きい場合のみ）
+  if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+  const idx = TAB_ORDER.indexOf(currentTab)
+  if (dx < 0 && idx < TAB_ORDER.length - 1) {
+    const next = TAB_ORDER[idx + 1]
+    const el = document.querySelector(`[data-tab="${next}"]`)
+    setTab(next, el)
+  } else if (dx > 0 && idx > 0) {
+    const prev = TAB_ORDER[idx - 1]
+    const el = document.querySelector(`[data-tab="${prev}"]`)
+    setTab(prev, el)
+  }
+}, { passive: true })
+
+// ── Init ───────────────────────────────────────────────────────────────────
+loadRunningTimer()
+if (runningTimer) startTimerTick()
+updateHeader()
+render()
+</script>
+</body>
+</html>
