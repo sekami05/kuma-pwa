@@ -229,6 +229,8 @@ textarea.inp{resize:none}
 .tl-colors{display:flex;gap:8px;margin:10px 0}
 .tl-color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;flex-shrink:0;transition:transform 0.1s}
 .tl-color-dot.sel{border-color:#fff;transform:scale(1.15)}
+.tag-chip{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:3px 8px;font-size:11px;color:var(--text2);cursor:pointer;white-space:nowrap;transition:all 0.15s}
+.tag-chip.sel{background:#8b5cf622;border-color:#8b5cf6;color:#8b5cf6;font-weight:600}
 .tl-section-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;padding:10px 0 6px}
 /* Edit overlay */
 .edit-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:flex;align-items:flex-end}
@@ -771,6 +773,7 @@ function openEditModal(rec) {
   document.body.appendChild(overlay)
   _editOverlay = overlay
   fetchPastActivities().then(acts => { const dl = document.getElementById('edit-activity-list'); if(dl) dl.innerHTML = acts.map(a=>`<option value="${escHtml(a)}">`).join('') })
+  document.getElementById('edit-modal-inp')?.addEventListener('change', e => { const p = _pastActMap[e.target.value.trim()]; if(p?.color){ currentEditColor = p.color; document.querySelectorAll('.edit-overlay .tl-color-dot').forEach(d => { d.classList.remove('sel'); if(d.style.background===p.color) d.classList.add('sel') }) } })
   setTimeout(() => document.getElementById('edit-modal-inp')?.focus(), 50)
 }
 
@@ -805,13 +808,23 @@ function toggleEditTag(tag, el) {
   if (currentEditTags.includes(tag)) { currentEditTags = currentEditTags.filter(t => t !== tag); el.classList.remove('sel') }
   else { currentEditTags = [...currentEditTags, tag]; el.classList.add('sel') }
 }
+let _pastActMap = {}  // { actName: {color, icon} }
 async function fetchPastActivities() {
-  const data = await sb('GET','kuma_time_records','?select=activity&order=started_at.desc&limit=500')
+  const data = await sb('GET','kuma_time_records','?select=activity,color,icon&order=started_at.desc&limit=500')
   const seen = new Set(); const result = []
   for (const r of data) {
-    if (r.activity && r.activity !== '–' && !seen.has(r.activity)) { seen.add(r.activity); result.push(r.activity) }
+    if (r.activity && r.activity !== '–' && !seen.has(r.activity)) {
+      seen.add(r.activity)
+      result.push(r.activity)
+      _pastActMap[r.activity] = { color: r.color, icon: r.icon }
+    }
   }
   return result
+}
+function applyPastAct(name) {
+  const p = _pastActMap[name]
+  if (!p) return
+  if (p.color) { selectedTlColor = p.color; document.querySelectorAll('.tl-color-dot').forEach(d => { d.classList.remove('sel'); if (d.style.background === p.color) d.classList.add('sel') }) }
 }
 async function startPwaTimer() {
   const inp = document.getElementById('tl-inp')
@@ -916,6 +929,7 @@ async function renderTimeline() {
     `
     sticky.appendChild(form)
     form.querySelector('#tl-inp')?.addEventListener('keydown', e => e.key==='Enter' && startPwaTimer())
+    form.querySelector('#tl-inp')?.addEventListener('change', e => applyPastAct(e.target.value.trim()))
     fetchPastActivities().then(acts => { const dl = document.getElementById('activity-list'); if(dl) dl.innerHTML = acts.map(a=>`<option value="${escHtml(a)}">`).join('') })
   }
 
