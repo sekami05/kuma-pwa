@@ -700,6 +700,7 @@ document.getElementById('later-inp')?.addEventListener('keydown', e => e.key ===
 // ── Timer state ────────────────────────────────────────────────────────────
 const TL_COLORS = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316']
 const TAG_PRESETS = ['Work','Game','Self-care','Cat care']
+const TAG_COLORS = {'Work':'#c4b5fd','Game':'#fca5a5','Self-care':'#93c5fd','Cat care':'#fdba74'}
 let runningTimer    = null   // { activity, color, startedAt, tags }
 let selectedTlColor = TL_COLORS[0]
 let selectedTlIcon = null
@@ -804,10 +805,20 @@ async function deleteRec() {
 function toggleTlTag(tag, el) {
   if (selectedTlTags.includes(tag)) { selectedTlTags = selectedTlTags.filter(t => t !== tag); el.classList.remove('sel') }
   else { selectedTlTags = [...selectedTlTags, tag]; el.classList.add('sel') }
+  const firstTag = selectedTlTags[0]
+  if (firstTag && TAG_COLORS[firstTag]) {
+    selectedTlColor = TAG_COLORS[firstTag]
+    document.querySelectorAll('.tl-color-dot').forEach(d => { d.classList.remove('sel'); if(d.style.background===selectedTlColor) d.classList.add('sel') })
+  }
 }
 function toggleEditTag(tag, el) {
   if (currentEditTags.includes(tag)) { currentEditTags = currentEditTags.filter(t => t !== tag); el.classList.remove('sel') }
   else { currentEditTags = [...currentEditTags, tag]; el.classList.add('sel') }
+  const firstTag = currentEditTags[0]
+  if (firstTag && TAG_COLORS[firstTag]) {
+    currentEditColor = TAG_COLORS[firstTag]
+    document.querySelectorAll('.edit-overlay .tl-color-dot').forEach(d => { d.classList.remove('sel'); if(d.style.background===currentEditColor) d.classList.add('sel') })
+  }
 }
 let _pastActMap = {}  // { actName: {color, icon} }
 async function fetchPastActivities() {
@@ -992,7 +1003,7 @@ async function renderTimeline() {
     const durMin = (r.duration || 0) / 60
     const top = (startMin - minH * 60) * PPM
     const height = Math.max(durMin * PPM, 24)
-    const color = r.color || '#6366f1'
+    const firstTag = r.tags ? r.tags.split(',')[0].trim() : null; const color = (firstTag && TAG_COLORS[firstTag]) || r.color || '#6366f1'
     const endIso = new Date(sd.getTime() + (r.duration||0)*1000).toISOString()
     const timeStr = `${fmtTime(r.started_at)}–${fmtTime(endIso)}`
 
